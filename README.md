@@ -24,7 +24,6 @@ Some screenshots:
 - 💾 **SQLite Database**: Zero-config, file-based database with SQLAlchemy ORM
 - 🚀 **Fast & Lightweight**: Built with FastAPI for async performance
 - 🔄 **URL Expiration**: Support for temporary campaigns (database field ready)
-- 🧪 **Test Suite**: Comprehensive tests for core functionality
 - 🐳 **Docker Ready**: Dockerfile and docker-compose.yml included
 
 ### 💡 Potential Enhancements
@@ -51,19 +50,13 @@ pip install -r requirements.txt
 
 3. Run the application:
 
-**Option A - Using the run script (Recommended for Windows):**
-
-```bash
-python run.py
-```
-
-**Option B - Using uvicorn directly:**
+**Option A - Using uvicorn directly:**
 
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**Option C - Using main.py:**
+**Option B - Using main.py:**
 
 ```bash
 python main.py
@@ -76,20 +69,6 @@ http://localhost:8000
 ```
 
 That's it! The database will be created automatically on first run.
-
-#### Windows-Specific Notes
-
-If you encounter multiprocessing errors on Windows:
-
-- Use `python run.py` (recommended) instead of `python main.py`
-- Ensure `watchfiles` is installed (included in requirements.txt)
-- Python 3.11+ required
-
-If auto-reload still doesn't work, run without reload:
-
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
 
 ## Usage
 
