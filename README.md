@@ -7,6 +7,11 @@ If these scripts were useful to you, consider donating to support the Developer 
 ![TinyURL Clone](screenshot.png)
 _Simple interface, powerful analytics - build your own URL shortener in a weekend_
 
+Some screenshots:
+![Analytics Dashboard](analytics1.png)
+![Analytics Top Referrers and Recent Clicks](analytics2.png)
+
+
 ## Features
 
 ### ✅ Currently Implemented
