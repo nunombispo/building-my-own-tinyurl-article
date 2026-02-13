@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TinyURL Clone - Shorten Your URLs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .main-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .navbar-custom {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 30px;
+        }
+        .feature-card {
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .copy-btn {
+            cursor: pointer;
+        }
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <div class="navbar-custom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="bi bi-link-45deg"></i>
+                    <strong>TinyURL</strong> Clone
+                </h4>
+                <span class="text-muted">Self-Hosted URL Shortener</span>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- URL Shortener Card -->
+                <div class="main-card p-5 mb-4">
+                    <h1 class="text-center mb-4">
+                        <i class="bi bi-scissors text-primary"></i>
+                        Shorten Your URL
+                    </h1>
+                    <p class="text-center text-muted mb-4">
+                        Create short, memorable links for your blog posts, guides, and GitHub projects
+                    </p>
+                    
+                    <form id="shortenForm">
+                        <div class="mb-3">
+                            <label for="longUrl" class="form-label">
+                                <i class="bi bi-link"></i> Long URL
+                            </label>
+                            <input 
+                                type="url" 
+                                class="form-control form-control-lg" 
+                                id="longUrl" 
+                                name="long_url"
+                                placeholder="https://example.com/very/long/url/that/needs/shortening"
+                                required
+                            >
+                            <div class="form-text">Enter the URL you want to shorten</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="customSlug" class="form-label">
+                                <i class="bi bi-tag"></i> Custom Slug (Optional)
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">{{ request.base_url }}</span>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="customSlug"
+                                    name="custom_slug"
+                                    placeholder="my-custom-link"
+                                    pattern="[a-zA-Z0-9_-]{3,50}"
+                                >
+                            </div>
+                            <div class="form-text">
+                                Leave blank for auto-generated slug. Use 3-50 alphanumeric characters, hyphens, or underscores.
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-magic"></i> Shorten URL
+                        </button>
+                    </form>
+                    
+                    <!-- Result Display -->
+                    <div id="result" class="mt-4 d-none">
+                        <div class="result-box">
+                            <h5 class="text-success mb-3">
+                                <i class="bi bi-check-circle-fill"></i> Success! Your short URL:
+                            </h5>
+                            <div class="input-group input-group-lg mb-3">
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="shortUrl" 
+                                    readonly
+                                >
+                                <button 
+                                    class="btn btn-outline-success copy-btn" 
+                                    onclick="copyToClipboard()"
+                                    title="Copy to clipboard"
+                                >
+                                    <i class="bi bi-clipboard"></i> Copy
+                                </button>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <a id="visitLink" href="#" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-box-arrow-up-right"></i> Visit Link
+                                </a>
+                                <a id="statsLink" href="#" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-graph-up"></i> View Stats
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Error Display -->
+                    <div id="error" class="alert alert-danger mt-4 d-none" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span id="errorMessage"></span>
+                    </div>
+                </div>
+                
+                <!-- Features Section -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="main-card p-4 h-100 feature-card">
+                            <div class="text-center">
+                                <i class="bi bi-shield-check text-primary" style="font-size: 2.5rem;"></i>
+                                <h5 class="mt-3">Full Control</h5>
+                                <p class="text-muted mb-0">
+                                    Own your data and URLs forever. No third-party dependencies.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="main-card p-4 h-100 feature-card">
+                            <div class="text-center">
+                                <i class="bi bi-graph-up-arrow text-success" style="font-size: 2.5rem;"></i>
+                                <h5 class="mt-3">Deep Analytics</h5>
+                                <p class="text-muted mb-0">
+                                    Track every click with detailed metrics and insights.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="main-card p-4 h-100 feature-card">
+                            <div class="text-center">
+                                <i class="bi bi-infinity text-info" style="font-size: 2.5rem;"></i>
+                                <h5 class="mt-3">No Limits</h5>
+                                <p class="text-muted mb-0">
+                                    Unlimited URLs and clicks. No monthly subscription fees.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('shortenForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Hide previous results/errors
+            document.getElementById('result').classList.add('d-none');
+            document.getElementById('error').classList.add('d-none');
+            
+            const form = e.target;
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch('/shorten', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                // Try to parse JSON response
+                let data;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    // If not JSON, get text for error message
+                    const text = await response.text();
+                    throw new Error('Server error: ' + text.substring(0, 100));
+                }
+                
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Failed to create short URL');
+                }
+                
+                // Display success result
+                document.getElementById('shortUrl').value = data.short_url;
+                document.getElementById('visitLink').href = data.short_url;
+                document.getElementById('statsLink').href = `/stats/${data.slug}`;
+                document.getElementById('result').classList.remove('d-none');
+                
+                // Reset form
+                form.reset();
+                
+            } catch (error) {
+                // Display error
+                console.error('Error:', error);
+                document.getElementById('errorMessage').textContent = error.message;
+                document.getElementById('error').classList.remove('d-none');
+            }
+        });
+        
+        function copyToClipboard() {
+            const shortUrl = document.getElementById('shortUrl');
+            shortUrl.select();
+            shortUrl.setSelectionRange(0, 99999); // For mobile devices
+            
+            navigator.clipboard.writeText(shortUrl.value).then(() => {
+                const btn = event.target.closest('button');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check2"></i> Copied!';
+                btn.classList.remove('btn-outline-success');
+                btn.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-success');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

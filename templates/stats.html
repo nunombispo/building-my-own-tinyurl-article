@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics for {{ url.slug }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+        .stat-card {
+            border-radius: 10px;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        .url-display {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            word-break: break-all;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark bg-primary shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-link-45deg"></i>
+                <strong>TinyURL</strong> Clone
+            </a>
+            <a href="/" class="btn btn-light btn-sm">
+                <i class="bi bi-plus-circle"></i> New URL
+            </a>
+        </div>
+    </nav>
+    
+    <div class="container mt-4 mb-5">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h1 class="mb-3">
+                    <i class="bi bi-graph-up text-primary"></i>
+                    Analytics Dashboard
+                </h1>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="mb-2">
+                            Short URL: 
+                            <code class="fs-5">{{ request.base_url }}{{ url.slug }}</code>
+                        </h5>
+                        <div class="url-display">
+                            <strong>Redirects to:</strong>
+                            <a href="{{ url.long_url }}" target="_blank" class="text-decoration-none">
+                                {{ url.long_url }}
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar3"></i>
+                                Created: {{ url.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card h-100 border-primary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-cursor-fill text-primary fs-3"></i>
+                        <h6 class="card-title mt-2 text-muted">Total Clicks</h6>
+                        <div class="stat-value text-primary">{{ url.click_count }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card h-100 border-success">
+                    <div class="card-body text-center">
+                        <i class="bi bi-people-fill text-success fs-3"></i>
+                        <h6 class="card-title mt-2 text-muted">Unique Visitors</h6>
+                        <div class="stat-value text-success">{{ unique_ips }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card h-100 border-info">
+                    <div class="card-body text-center">
+                        <i class="bi bi-calendar-day-fill text-info fs-3"></i>
+                        <h6 class="card-title mt-2 text-muted">Avg. Clicks/Day</h6>
+                        <div class="stat-value text-info">{{ avg_clicks_per_day }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card h-100 border-warning">
+                    <div class="card-body text-center">
+                        <i class="bi bi-clock-history text-warning fs-3"></i>
+                        <h6 class="card-title mt-2 text-muted">Days Active</h6>
+                        <div class="stat-value text-warning">
+                            {{ days_since_creation }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up"></i>
+                            Clicks Over Time
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="clicksChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-phone"></i>
+                            Device Types
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="deviceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Referrers -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-signpost-2"></i>
+                            Top Referrers
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if clicks_by_referrer %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Referrer</th>
+                                        <th class="text-end">Clicks</th>
+                                        <th class="text-end">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for referrer, count in clicks_by_referrer.items()|sort(attribute='1', reverse=True) %}
+                                    {% if loop.index <= 10 %}
+                                    <tr>
+                                        <td>{{ referrer }}</td>
+                                        <td class="text-end">
+                                            <span class="badge bg-primary">{{ count }}</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="progress" style="height: 20px; width: 100px; float: right;">
+                                                <div class="progress-bar" role="progressbar" 
+                                                     style="width: {{ (count / url.click_count * 100)|round }}%"
+                                                     aria-valuenow="{{ count }}" aria-valuemin="0" aria-valuemax="{{ url.click_count }}">
+                                                    {{ (count / url.click_count * 100)|round }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted text-center">No referrer data yet</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Clicks -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i>
+                            Recent Clicks
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if clicks %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Referrer</th>
+                                        <th>Device</th>
+                                        <th>Browser</th>
+                                        <th>OS</th>
+                                        <th>IP Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for click in recent_clicks %}
+                                    <tr>
+                                        <td>
+                                            <small>{{ click.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ click.referrer or 'Direct' }}</small>
+                                        </td>
+                                        <td>
+                                            {% if click.device_type == 'mobile' %}
+                                            <span class="badge bg-primary"><i class="bi bi-phone"></i> Mobile</span>
+                                            {% elif click.device_type == 'tablet' %}
+                                            <span class="badge bg-info"><i class="bi bi-tablet"></i> Tablet</span>
+                                            {% elif click.device_type == 'desktop' %}
+                                            <span class="badge bg-success"><i class="bi bi-laptop"></i> Desktop</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">{{ click.device_type }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td><small>{{ click.browser or 'Unknown' }}</small></td>
+                                        <td><small>{{ click.os or 'Unknown' }}</small></td>
+                                        <td><code>{{ click.ip_address or 'N/A' }}</code></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                            <p class="text-muted mt-3">No clicks yet! Share your link to start tracking.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Clicks over time chart
+        const clicksData = {{ clicks_by_date|tojson|safe }};
+        const clicksDates = Object.keys(clicksData).sort();
+        const clicksCounts = clicksDates.map(date => clicksData[date]);
+        
+        const clicksCtx = document.getElementById('clicksChart').getContext('2d');
+        new Chart(clicksCtx, {
+            type: 'line',
+            data: {
+                labels: clicksDates,
+                datasets: [{
+                    label: 'Clicks',
+                    data: clicksCounts,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Device type chart
+        const deviceData = {{ clicks_by_device|tojson|safe }};
+        const deviceLabels = Object.keys(deviceData);
+        const deviceCounts = Object.values(deviceData);
+        
+        const deviceCtx = document.getElementById('deviceChart').getContext('2d');
+        new Chart(deviceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: deviceLabels.map(label => label.charAt(0).toUpperCase() + label.slice(1)),
+                datasets: [{
+                    data: deviceCounts,
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)',
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

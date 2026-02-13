@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    container_name: tinyurl-clone
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist database file on host
+      - ./data:/app/data
+      # Mount templates for hot reload during development
+      - ./templates:/app/templates
+    environment:
+      # Override database URL to use persistent volume
+      - DATABASE_URL=sqlite:///./data/urls.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
